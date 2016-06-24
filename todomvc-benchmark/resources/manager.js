@@ -1,55 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>DoYouEvenBench</title>
-<script type="text/javascript" src="https://www.google.com/jsapi"></script>
-<script src="resources/benchmark-runner.js" defer></script>
-<script src="resources/tests.js" defer></script>
-<style>
-/*
-iframe { border: 1px solid black; }
-ol { list-style: none; margin: 0; padding: 0; }
-ol ol { margin-left: 2em; list-position: outside; }
-.running { text-decoration: underline; }
-.ran { color: grey; }
-nav { position: absolute; right: 10px; }
-*/
-</style>
-<style>
-body {
-  font-family: 'Lucida Grande','Trebuchet MS','Bitstream Vera Sans',Verdana,Helvetica,sans-serif;
-  background-color: rgb(253, 253, 253);
-}
-iframe { border: 1px solid black; }
-button { margin: 15px 5px; }
-ol { list-style: none; margin: 5px 0; padding: 0; }
-ol ol { margin-left: 2em; list-position: outside; }
-.running { text-decoration: underline; }
-.ran { color: grey; }
-nav { position: absolute; right: 10px; }
-</style>
-</head>
-<body>
-  <div id="analysis" style="float:left; display: none;">
-    <div id="barchart_values"></div>
-    <div style="width: 400px; margin: 30px;">
-      <p>Notice that Om, Mercury, and Elm consistently do really well
-      compared to the other entries.
-      </p>
-      <p>All three of these projects are based on the Virtual DOM
-      approach and make heavy use of <b>immutability</b> to get these
-      speed gains.
-      </p>
-      <p>Read more about this <a href="http://elm-lang.org/blog/Blazing-Fast-Html.elm">here</a>.
-      </p>
-      <p>And <a href="https://github.com/evancz/todomvc-perf-comparison/">here</a>
-      is the code used for these tests.
-      </p>
-    </div>
-  </div>
-  <script src="resources/manager.js"></script>
-<script>
-/*
+﻿
 var runs = [],
     res = document.getElementById('results'),
     timesRan = 0,
@@ -63,6 +12,17 @@ function createUIForSuites(suites, onstep, onrun) {
     var control = document.createElement('nav');
     var ol = document.createElement('ol');
     var checkboxes = [];
+
+    var button = document.createElement('button');
+    button.textContent = 'Step Tests';
+    button.onclick = onstep;
+    control.appendChild(button);
+
+    var button = runButton = document.createElement('button');
+    button.textContent = 'Run All';
+    button.onclick = onrun;
+    control.appendChild(button);
+
     for (var suiteIndex = 0; suiteIndex < suites.length; suiteIndex++) {
         var suite = suites[suiteIndex];
         var li = document.createElement('li');
@@ -97,16 +57,6 @@ function createUIForSuites(suites, onstep, onrun) {
     }
 
     control.appendChild(ol);
-
-    var button = document.createElement('button');
-    button.textContent = 'Step';
-    button.onclick = onstep;
-    control.appendChild(button);
-
-    var button = runButton = document.createElement('button');
-    button.textContent = 'Run';
-    button.onclick = onrun;
-    control.appendChild(button);
 
     return control;
 }
@@ -173,6 +123,8 @@ function startTest() {
     document.body.appendChild(createUIForSuites(Suites,
         function () { runner.step(currentState).then(function (state) { currentState = state; }); },
         function () {
+            var analysis = document.getElementById("analysis");
+            analysis.style.display = 'none';
             callNextStep(currentState);
         }));
 
@@ -183,20 +135,45 @@ function startTest() {
                 results[key] = results[key] || 0
                 results[key] += runData[key].total
             }
-        })
-        for (var key in results) {
-            results[key] /= runs.length
-        }
-        var res = JSON.stringify(results, null, 4),
-            pre = document.createElement('pre')
-        pre.textContent = runs.length + ' runs average:\n' + res + '\n'
-            + 'See console output for more details.'
-        document.body.appendChild(pre)
+        });
+        drawChart(results);
     }
 }
 
+google.load("visualization", "1", {packages:["corechart"]});
+function drawChart(results) {
+    var rawData = [ [ "Project" , "Time", { role: "style"} ] ];
+    for (var key in results) {
+        var color = key === 'Elm-17' ? 'rgb(140, 217, 217)': 'rgb(140, 217, 140)';
+        rawData.push([ key, Math.round(results[key] / runs.length), color ]);
+    }
+    var data = google.visualization.arrayToDataTable(rawData);
+
+    var view = new google.visualization.DataView(data);
+    view.setColumns([0, 1,
+                     { calc: "stringify",
+                       sourceColumn: 1,
+                       type: "string",
+                       role: "annotation" },
+                     2]);
+
+    var runWord = "run" + (runs.length > 1 ? "s" : "");
+    var title = "Average time in milliseconds over " + runs.length +
+        " " + runWord + " (lower is better)";
+
+    var options = {
+	title: "TodoMVC Benchmark",
+	width: 600,
+	height: 400,
+        legend: { position: "none" },
+        backgroundColor: 'transparent',
+        hAxis: {title: title}
+    };
+    var analysis = document.getElementById("analysis");
+    analysis.style.display = 'block';
+    var barchart = document.getElementById("barchart_values");
+    var chart = new google.visualization.BarChart(barchart);
+    chart.draw(view, options);
+}
+
 window.addEventListener('load', startTest);
-*/
-</script>
-</body>
-</html>
